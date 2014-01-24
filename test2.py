@@ -1,6 +1,7 @@
 import os,gtk,sys,signal,gobject,time
 from p1 import dsaa
 from play import playfile
+from record import record
 
 
 class Wave(gtk.Window):
@@ -22,7 +23,7 @@ class Wave(gtk.Window):
 	      for i in range(3):
 		   if(self.mixing[i]==True):
 			l.append(self.song[i])
-	      self.work.Modulate(l,"temp3.wav")
+	      self.waveobject[val].Modulate(l,"temp3.wav")
 	      pid1=os.fork()
 	      if(pid1==0):
 	      	a=playfile()
@@ -43,7 +44,7 @@ class Wave(gtk.Window):
 			     l2.append(self.shift[i])
 			else:
 			     l2.append(0)
-	      self.work.Modulate(l1,"temp4.wav",l2)
+	      self.waveobject[val].Modulate(l1,"temp4.wav",l2)
 	      pid2=os.fork()
 	      if(pid2==0):
 		   a=playfile()
@@ -56,75 +57,77 @@ class Wave(gtk.Window):
 	 if(self.pid1[val]>0):
 	      os.kill(self.pid1[val],9)
 	      self.pid1[val]=-1
+	      self.elapsed[val]=0
+	      self.runtime[val] = time.time()
 	      self.played[val]=False
 	 else:
+	      self.progressbar[val].set_fraction(0.0)
 	      print self.pid1
 	      pid=os.fork() 
 	      self.pid1[val]=pid
+	      self.played[val]=True
+	      if(val<=2):
+		   print self.waveobject[0].parameters
+		   print "amplitude " ,self.amp[val]
+	           self.waveobject[val].Amplify(self.song[val],self.amp[val],"temp"+str(val)+".wav")
+		   if(self.reversal[val]==True):
+				self.waveobject[val].Reverse("temp"+str(val)+".wav","temp"+str(val)+".wav")
+		   if(self.scale[val]>1):
+	                	self.waveobject[val].Scale("temp"+str(val)+".wav",self.scale[val],"temp"+str(val)+".wav")
+	           if(self.shift[val]!=0):
+				self.waveobject[val].Shift("temp"+str(val)+".wav",self.shift[val],"temp"+str(val)+".wav")
+		   self.waveobject[val].WriteFile("temp"+str(val)+".wav",self.waveobject[val].parameters,self.waveobject[val].data)
+		   print self.waveobject[0].parameters
+	      else:
+		   if(val==4):
+			l=[]
+			for i in range(3):
+			     if(self.modulation[i]==True):
+				  self.waveobject[val].Amplify(self.song[i],self.amp[i],"temp"+str(i)+".wav")
+		   		  if(self.reversal[i]==True):
+					self.waveobject[i].Reverse("temp"+str(i)+".wav","temp"+str(i)+".wav")
+		   		  if(self.scale[i]>1):
+	                		self.waveobject[i].Scale("temp"+str(i)+".wav",self.scale[i],"temp"+str(i)+".wav")
+	           		  if(self.shift[i]!=0):
+					self.waveobject[i].Shift("temp"+str(i)+".wav",self.shift[i],"temp"+str(i)+".wav")
+		   		  self.waveobject[i].WriteFile("temp"+str(i)+".wav",self.waveobject[i].parameters,self.waveobject[i].data)
+				  l.append("temp"+str(i)+".wav")
+			     print l
+			     self.waveobject[val].Modulate(l,"temp4.wav")
+	           elif(val==3):
+			l=[]
+		   	for i in range(3):
+				if(self.mixing[i]==True):
+			     		self.waveobject[i].Amplify(self.song[i],self.amp[i],"temp"+str(i)+".wav")
+			     		if(self.reversal[i]==True):
+				  		self.waveobject[i].Reverse("temp"+str(i)+".wav","temp"+str(i)+".wav")
+		   	     		if(self.scale[i]>1):
+	                     	  		self.waveobject[i].Scale("temp"+str(i)+".wav",self.scale[i],"temp"+str(i)+".wav")
+	           	     		if(self.shift[i]!=0):
+			     	  		self.waveobject[i].Shift("temp"+str(i)+".wav",self.shift[i],"temp"+str(i)+".wav")
+		   	     		self.waveobject[i].WriteFile("temp"+str(i)+".wav",self.waveobject[i].parameters,self.waveobject[i].data)
+			     		l.append("temp"+str(i)+".wav")
+				print l
+			self.waveobject[val].Mix(l,"temp3.wav")
+	      self.elapsed[val] = 0.0
+	      self.runtime[val]=time.time()
 	      if(pid==0):
-		   self.played[val]=True
-		   if(val<=2):
-		   	print "amplitude " ,self.amp[val]
-	           	self.work.Amplify(self.song[val],self.amp[val],"temp"+str(val)+".wav")
-		   	if(self.reversal[val]==True):
-				self.work.Reverse("temp"+str(val)+".wav","temp"+str(val)+".wav")
-		   	if(self.scale[val]>1):
-	                	self.work.Scale("temp"+str(val)+".wav",self.scale[val],"temp"+str(val)+".wav")
-	           	if(self.shift[val]!=0):
-				self.work.Shift("temp"+str(val)+".wav",self.shift[val],"temp"+str(val)+".wav")
-		   	self.work.WriteFile("temp"+str(val)+".wav",self.work.parameters,self.work.data)
-			self.waveobject[val].parameters=self.work.parameters
 		   	a=playfile()
 		   	print self.played[val]
 	 	   	a.play("temp"+str(val)+".wav")
 		   	sys.exit(0)
-		   else:
-			if(val==4):
-			     l=[]
-			     for i in range(3):
-				  if(self.modulation[i]==True):
-	           			self.work.Amplify(self.song[i],self.amp[i],"temp"+str(i)+".wav")
-		   			if(self.reversal[i]==True):
-						self.work.Reverse("temp"+str(i)+".wav","temp"+str(i)+".wav")
-		   			if(self.scale[i]>1):
-	                			self.work.Scale("temp"+str(i)+".wav",self.scale[i],"temp"+str(i)+".wav")
-	           			if(self.shift[i]!=0):
-						self.work.Shift("temp"+str(i)+".wav",self.shift[i],"temp"+str(i)+".wav")
-		   			self.work.WriteFile("temp"+str(i)+".wav",self.work.parameters,self.work.data)
-					l.append("temp"+str(i)+".wav")
-			     print l
-			     self.work.Modulate(l,"temp4.wav")
-		   	     a=playfile()
-			     self.played[val]=True
-	 	   	     a.play("temp"+str(val)+".wav")
-		   	     sys.exit(0)
-			elif(val==3):
-			     l=[]
-			     for i in range(3):
-				  if(self.mixing[i]==True):
-	           			self.work.Amplify(self.song[i],self.amp[i],"temp"+str(i)+".wav")
-		   			if(self.reversal[i]==True):
-						self.work.Reverse("temp"+str(i)+".wav","temp"+str(i)+".wav")
-		   			if(self.scale[i]>1):
-	                			self.work.Scale("temp"+str(i)+".wav",self.scale[i],"temp"+str(i)+".wav")
-	           			if(self.shift[i]!=0):
-						self.work.Shift("temp"+str(i)+".wav",self.shift[i],"temp"+str(i)+".wav")
-		   			self.work.WriteFile("temp"+str(i)+".wav",self.work.parameters,self.work.data)
-					l.append("temp"+str(i)+".wav")
-			     print l
-			     self.work.Mix(l,"temp3.wav")
-		   	     a=playfile()
-	 	   	     a.play("temp"+str(val)+".wav")
-		   	     sys.exit(0)
 
 
 
     def on_click_pause_button(self,widget,val):
 	 if(self.pause[val]==False):
 	      os.kill(self.pid1[val],signal.SIGSTOP)
+	      self.elapsed[val]= self.elapsed[val]+time.time()-self.runtime[val]
+	      self.runtime[val] = 0.0
 	      self.pause[val]=True
 	 else:
 	      os.kill(self.pid1[val],signal.SIGCONT)
+	      self.runtime[val] = time.time()
 	      self.pause[val] = False
 
 
@@ -134,7 +137,7 @@ class Wave(gtk.Window):
 
 
     def callbackreversal(self, widget, val):
-	 #self.work.Reverse(self.song[val],self.song[val])
+	 print self.waveobject[0].parameters
 	 if(self.reversal[val]==False):
 	      self.reversal[val]=True
 	 else:
@@ -158,11 +161,11 @@ class Wave(gtk.Window):
     
     
     def progress_timeout(self,pbobj):
-	  print self.waveobject[0].parameters
-	 # for i in range(3):
-	  #     if(self.pid1[i]>=0):
-	#	    self.progressbar[i].set_fraction(((self.elapsed[i]+time.time()-self.runtime[i])/(self.attributes[i][3]/self.attributes[i][2])))
-	  return True
+	 for i in range(5):
+	        if(self.pid1[i]>=0):
+		     # print self.waveobject[i].parameters
+		     self.progressbar[i].set_fraction(((self.elapsed[i]+time.time()-self.runtime[i])/(self.waveobject[i].parameters[3]/self.waveobject[i].parameters[2])))
+	 return True
     
     
     def __init__(self):
@@ -170,8 +173,11 @@ class Wave(gtk.Window):
 	 self.set_title("DSAA")
 	 self.set_size_request(700,600)
 	 self.set_position(gtk.WIN_POS_CENTER)
-	 img=gtk.Image()
-	 self.set_icon_from_file(self.get_resource_path("icon.jpg"))
+	 try:
+	 	img=gtk.Image()
+	 	self.set_icon_from_file(self.get_resource_path("icon.jpg"))
+	 except:
+	      pass
 
 
 	 #progress bar
@@ -198,13 +204,18 @@ class Wave(gtk.Window):
 
 
 	 #make dsaa objects
-	 self.work = dsaa()
 
 
 	 #make objects of dssa
 	 self.waveobject=list()
 	 for i in range(5):
 	      self.waveobject.append(dsaa())
+
+	 #make recording object
+	 self.rec = record()
+	 self.rec.stop = False
+
+	 self.is_recording = False
 
 	 #pause
 	 self.pause = list()
@@ -220,6 +231,14 @@ class Wave(gtk.Window):
 	 self.song=list()
 	 for i in range(3):
 	      self.song.append(None)
+
+
+	 self.elapsed=list()
+	 for i in range(5):
+	      self.elapsed.append(0)
+	 self.runtime=list()
+	 for i in range(5):
+	      self.runtime.append(0)
 
 
 	 #pids of the processes if(-1) no song is being played
@@ -381,30 +400,36 @@ class Wave(gtk.Window):
 	 #Mix Button
 	 mixbutton = gtk.Button("Mix and Play")
 	 mixbutton.connect("clicked",self.on_click_play_button,3)
-	 self.fixed.put(mixbutton,140,530)
+	 self.fixed.put(mixbutton,50,530)
 
 
 	 #Modulate Button
 	 modbutton = gtk.Button("Modulate and Play")
 	 modbutton.connect("clicked",self.on_click_play_button,4)
-	 self.fixed.put(modbutton,340,530)
+	 self.fixed.put(modbutton,250,530)
+
+
+	 #Record Button
+	 recordbutton = gtk.Button("Start/Stop Recording")
+	 recordbutton.connect("clicked",self.on_click_record_button)
+	 self.fixed.put(recordbutton,450,530)
 
 
 	 #Progress Bar for Mix
-	 progressmix = gtk.ProgressBar(None)
-	 progressmix.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
-	 self.fixed.put(progressmix,110,570)
+#	 progressmix = gtk.ProgressBar(None)
+#	 progressmix.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
+#	 self.fixed.put(progressmix,110,570)
 
 
 	 #Progress Bar for Modulate
-	 progressmodulate = gtk.ProgressBar(None)
-	 progressmodulate.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
-	 self.fixed.put(progressmodulate,330,570)
+#	 progressmodulate = gtk.ProgressBar(None)
+#	 progressmodulate.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
+#	 self.fixed.put(progressmodulate,330,570)
 	 
 	 
 	 #Progress Bar
 	 self.progressbar=list()
-	 for i in range(3):
+	 for i in range(5):
 	      progress = gtk.ProgressBar(None)
 	      progress.set_orientation(gtk.PROGRESS_LEFT_TO_RIGHT)
 	      progress.set_fraction(0.0)
@@ -412,12 +437,31 @@ class Wave(gtk.Window):
          self.fixed.put(self.progressbar[0],30,500)
          self.fixed.put(self.progressbar[1],240,500)
          self.fixed.put(self.progressbar[2],450,500)
+         self.fixed.put(self.progressbar[3],20,570)
+         self.fixed.put(self.progressbar[4],240,570)
+
+
+
+ 	
+    def on_click_record_button(self,widget):
+	 if(self.is_recording==False):
+	        pid = os.fork()
+		self.is_recording = True
+		if(pid==0):
+		     self.rec.record_to_file('demo.wav')
+		     sys.exit(0)
+	 else:
+	        self.rec.stop = False
+		self.is_recording = False
+	 return
+
+
 
     def amplitude_on_scale_change(self,widget,val):
 	 amount = self.amplitude[val].get_value()
 	 print amount
 	 self.amp[val]=amount
-	# self.work.Amplify(self.song[val],amount,self.song[val])
+	# self.waveobject[val].Amplify(self.song[val],amount,self.song[val])
 	 
 
     def shift_on_scale_change(self,widget,val):

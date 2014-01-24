@@ -115,51 +115,83 @@ class dsaa():
 
 
 	def Scale(self,SourceFile,amount,NewFile):
-     		SourceWaveFile = wave.open(SourceFile,'r')
-     		parameters = SourceWaveFile.getparams()
-     		print parameters
-     		length = SourceWaveFile.getnframes()
-     		waveData = SourceWaveFile.readframes(length)
-     		SourceWaveFile.close()
-     		DestinationWaveFile = wave.open(NewFile,'w')
-    		if(parameters[1]==2):
-		     var = '%ih' %(parameters[0]*parameters[3])
-     		else:
-		     var = '%iB' %(parameters[0]*parameters[3])
-     		data = struct.unpack(var, waveData)
-     		l=[]
-		i=0
-		factor = amount*1.0
-		var1 = factor*i
-     		while(var1<len(data)):
-		     if(var1.is_integer()):
-			  for j in range(parameters[0]):
-			       l.append(data[int(var1)+j])
-		     else:
-			  for j in range(parameters[0]):
-			       l.append(0)
-	             i+=parameters[0]
-		     var1=factor*i
-		print len(data)
-		print len(l)
-     		parameters1=list(parameters)
-     		parameters1[3] = (parameters1[3]*(1.0))/amount
-		if not parameters1[3].is_integer():
-		     parameters1[3]=int(parameters1[3])+1
-		else:
-		     parameters1[3]=int(parameters1[3])
-		parameters1 = tuple(parameters1)
-		print parameters1
-		print parameters1
-    		if(parameters1[1]==2):
-		     var = '%ih' %(parameters1[0]*parameters1[3])
-     		else:
-		     var = '%iB' %(parameters1[0]*parameters1[3])
+	     	
 
-     		DestinationWaveFile.setparams(parameters1)
-     		newFile=struct.pack(var,*l)
-     		DestinationWaveFile.writeframes(newFile)
-     		DestinationWaveFile.close()
+
+		count = 0
+		new = list()
+	        self.data=list(self.data)
+		data = self.data
+		self.parameters = list(self.parameters)
+		if(self.parameters[0]==1):
+		     for i in range(len(data)):
+			  if(int(i*amount)>(len(data)-1)):
+			       break
+			  count+=1
+			  new.append(int(data[int(i*amount)]))
+		else:
+		     for i in range(0,len(data),2):
+			  if(int(i*amount)>(len(data)-1)):
+			       break
+			  count+=1
+			  new.append(int(data[int(i*amount)]))
+			  if(int(i+1)*amount>(len(data)-1)):
+			       new.append(0)
+			  else:
+			       new.append(int(data[int((i+1)*amount)]))
+
+
+		self.parameters[3] = count
+		self.data = tuple(new)
+		self.parameters = tuple(self.parameters)
+
+
+
+#     		SourceWaveFile = wave.open(SourceFile,'r')
+ #    		parameters = SourceWaveFile.getparams()
+  #   		print parameters
+   #  		length = SourceWaveFile.getnframes()
+    # 		waveData = SourceWaveFile.readframes(length)
+     #		SourceWaveFile.close()
+     #		DestinationWaveFile = wave.open(NewFile,'w')
+    #		if(parameters[1]==2):
+#		     var = '%ih' %(parameters[0]*parameters[3])
+#     		else:
+#		     var = '%iB' %(parameters[0]*parameters[3])
+ #    		data = struct.unpack(var, waveData)
+  #   		l=[]
+#		i=0
+#		factor = amount*1.0
+#		var1 = factor*i
+ #    		while(var1<len(data)):
+#		     if(var1.is_integer()):
+#			  for j in range(parameters[0]):
+#			       l.append(data[int(var1)+j])
+#		     else:
+#			  for j in range(parameters[0]):
+#			       l.append(0)
+#		     #i+=parameters[0]
+#		     var1=factor*i
+#		print len(data)
+#		print len(l)
+ #    		parameters1=list(parameters)
+#     		parameters1[3] = (parameters1[3]*(1.0))/amount
+#		#if not parameters1[3].is_integer():
+#		     parameters1[3]=int(parameters1[3])+1
+#		else:
+#		     parameters1[3]=int(parameters1[3])
+#		parameters1 = tuple(parameters1)
+#		print parameters1
+#		print parameters1
+ #   		if(parameters1[1]==2):
+#		     var = '%ih' %(parameters1[0]*parameters1[3])
+#     		else:
+#		     var = '%iB' %(parameters1[0]*parameters1[3])
+#
+ #    		DestinationWaveFile.setparams(parameters1)
+#     		newFile=struct.pack(var,*l)
+#     		DestinationWaveFile.writeframes(newFile)
+ #    		DestinationWaveFile.close()
 
 
 
@@ -306,6 +338,7 @@ class dsaa():
 		#print l
 		var1='%ih' %(parameters1[0]*parameters1[3])
 		DestinationWaveFile = wave.open(NewFile,'w')
+		self.parameters = parameters1
 		DestinationWaveFile.setparams(parameters1)
 		newFile=struct.pack(var1,*l)
 		DestinationWaveFile.writeframes(newFile)
@@ -344,7 +377,8 @@ class dsaa():
 		waveData=[]
 		var=[]
 		data=[]
-		print SourceFile
+		print "LENGTH OF SOURCE FILE"
+		print len(SourceFile)
 		print NewFile
 	     	for i in range(len(SourceFile)):
 		     SourceWaveFile.append(self.OpenSourceFile(SourceFile[i]))
@@ -377,8 +411,8 @@ class dsaa():
 		print m
 		parameters1=tuple(parameters1)
      		l=[]
-		print parameters[0]
-		print parameters[1]
+	#	print parameters[0]
+	#	print parameters[1]
 		print parameters1
      		for i in range(n):
 		     temp=1
@@ -408,6 +442,7 @@ class dsaa():
 		#print l
 		var1='%ih' %(parameters1[0]*parameters1[3])
 		DestinationWaveFile = wave.open(NewFile,'w')
+		self.parameters = parameters1
 		DestinationWaveFile.setparams(parameters1)
 		newFile=struct.pack(var1,*l)
 		DestinationWaveFile.writeframes(newFile)
