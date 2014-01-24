@@ -1,0 +1,22 @@
+==============INSTRUCTIONS=================
+
+
+1) For running GUI : python test2.py
+2) Recording is saved in demo.wav
+3) Recording is done till the voice goes down by certain threshold
+4) After playing the song you need to press it again to completely kill the process
+5) fork has been used. So multiple processes can run at at time
+6) Temporary files are used in which the changed files are stored.Their names are temp0.wav,temp1.wavtemp2.wavtemp3.wavtemp4.wav
+
+
+
+
+
+
+
+
+
+
+Made By :
+Saurabh Kathpalia
+201201039

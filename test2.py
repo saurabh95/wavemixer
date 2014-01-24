@@ -1,7 +1,7 @@
 import os,gtk,sys,signal,gobject,time
 from p1 import dsaa
 from play import playfile
-from record import record
+from record import *
 
 
 class Wave(gtk.Window):
@@ -44,7 +44,7 @@ class Wave(gtk.Window):
 			     l2.append(self.shift[i])
 			else:
 			     l2.append(0)
-	      self.waveobject[val].Modulate(l1,"temp4.wav",l2)
+	      self.waveobject[val].Modulate(l2,"temp4.wav",l2)
 	      pid2=os.fork()
 	      if(pid2==0):
 		   a=playfile()
@@ -57,6 +57,7 @@ class Wave(gtk.Window):
 	 if(self.pid1[val]>0):
 	      os.kill(self.pid1[val],9)
 	      self.pid1[val]=-1
+	      self.progressbar[val].set_fraction(0.0)
 	      self.elapsed[val]=0
 	      self.runtime[val] = time.time()
 	      self.played[val]=False
@@ -72,43 +73,47 @@ class Wave(gtk.Window):
 	           self.waveobject[val].Amplify(self.song[val],self.amp[val],"temp"+str(val)+".wav")
 		   if(self.reversal[val]==True):
 				self.waveobject[val].Reverse("temp"+str(val)+".wav","temp"+str(val)+".wav")
-		   if(self.scale[val]>1):
-	                	self.waveobject[val].Scale("temp"+str(val)+".wav",self.scale[val],"temp"+str(val)+".wav")
+		   if(self.scale[val]!=1):
+			   print "SCAle : ",self.scale[val]
+			   self.waveobject[val].Scale("temp"+str(val)+".wav",self.scale[val],"temp"+str(val)+".wav")
 	           if(self.shift[val]!=0):
 				self.waveobject[val].Shift("temp"+str(val)+".wav",self.shift[val],"temp"+str(val)+".wav")
 		   self.waveobject[val].WriteFile("temp"+str(val)+".wav",self.waveobject[val].parameters,self.waveobject[val].data)
 		   print self.waveobject[0].parameters
 	      else:
 		   if(val==4):
-			l=[]
+			l1=[]
 			for i in range(3):
 			     if(self.modulation[i]==True):
-				  self.waveobject[val].Amplify(self.song[i],self.amp[i],"temp"+str(i)+".wav")
+				  print "GONE"
+				  self.waveobject[i].Amplify(self.song[i],self.amp[i],"temp"+str(i)+".wav")
 		   		  if(self.reversal[i]==True):
 					self.waveobject[i].Reverse("temp"+str(i)+".wav","temp"+str(i)+".wav")
-		   		  if(self.scale[i]>1):
+		   		  if(self.scale[i]!=1.000):
 	                		self.waveobject[i].Scale("temp"+str(i)+".wav",self.scale[i],"temp"+str(i)+".wav")
 	           		  if(self.shift[i]!=0):
 					self.waveobject[i].Shift("temp"+str(i)+".wav",self.shift[i],"temp"+str(i)+".wav")
-		   		  self.waveobject[i].WriteFile("temp"+str(i)+".wav",self.waveobject[i].parameters,self.waveobject[i].data)
-				  l.append("temp"+str(i)+".wav")
-			     print l
-			     self.waveobject[val].Modulate(l,"temp4.wav")
+				  self.waveobject[i].WriteFile("temp"+str(i)+".wav",self.waveobject[i].parameters,self.waveobject[i].data)
+				  l1.append("temp"+str(i)+".wav")
+		             print "List : ",
+			     print l1
+			self.waveobject[val].Modulate(l1,"temp4.wav")
 	           elif(val==3):
-			l=[]
+			l2=[]
+			print "self.modulation", self.modulation
 		   	for i in range(3):
 				if(self.mixing[i]==True):
 			     		self.waveobject[i].Amplify(self.song[i],self.amp[i],"temp"+str(i)+".wav")
 			     		if(self.reversal[i]==True):
 				  		self.waveobject[i].Reverse("temp"+str(i)+".wav","temp"+str(i)+".wav")
-		   	     		if(self.scale[i]>1):
+		   	     		if(self.scale[i]!=1.000):
 	                     	  		self.waveobject[i].Scale("temp"+str(i)+".wav",self.scale[i],"temp"+str(i)+".wav")
 	           	     		if(self.shift[i]!=0):
 			     	  		self.waveobject[i].Shift("temp"+str(i)+".wav",self.shift[i],"temp"+str(i)+".wav")
 		   	     		self.waveobject[i].WriteFile("temp"+str(i)+".wav",self.waveobject[i].parameters,self.waveobject[i].data)
-			     		l.append("temp"+str(i)+".wav")
-				print l
-			self.waveobject[val].Mix(l,"temp3.wav")
+			     		l2.append("temp"+str(i)+".wav")
+				print l2
+			self.waveobject[val].Mix(l2,"temp3.wav")
 	      self.elapsed[val] = 0.0
 	      self.runtime[val]=time.time()
 	      if(pid==0):
@@ -150,6 +155,8 @@ class Wave(gtk.Window):
 	      self.modulation[val]=True
 	 else:
 	      self.modulation[val]=False
+	 print self.modulation
+	 print "Modulation"
 	 print "%s was toggled %s" % (val,widget.get_active())
 
     def callbackmixing(self, widget, val):
@@ -170,6 +177,7 @@ class Wave(gtk.Window):
     
     def __init__(self):
 	 super(Wave,self).__init__()
+	 self.connect("destroy",self.destroy)
 	 self.set_title("DSAA")
 	 self.set_size_request(700,600)
 	 self.set_position(gtk.WIN_POS_CENTER)
@@ -211,11 +219,6 @@ class Wave(gtk.Window):
 	 for i in range(5):
 	      self.waveobject.append(dsaa())
 
-	 #make recording object
-	 self.rec = record()
-	 self.rec.stop = False
-
-	 self.is_recording = False
 
 	 #pause
 	 self.pause = list()
@@ -282,7 +285,7 @@ class Wave(gtk.Window):
 	 self.scale = list()
 	 self.timescale = list()
 	 for i in range(3):
-	      self.scale.append(0)
+	      self.scale.append(1)
 
 
 
@@ -345,8 +348,8 @@ class Wave(gtk.Window):
 	 self.timeshift=list()
 	 for i in range(3):
 	 	scale=gtk.HScale()
-	 	scale.set_range(-10,10)
-	 	scale.set_increments(0.5, 1)
+	 	scale.set_range(-1,1)
+	 	scale.set_increments(0.1, 1)
 	 	scale.set_digits(1)
 	 	scale.set_size_request(160, 45)
 	 	scale.connect("value-changed", self.shift_on_scale_change,i)
@@ -364,10 +367,11 @@ class Wave(gtk.Window):
 	 self.timescale=list()
 	 for i in range(3):
 	 	scale=gtk.HScale()
-	 	scale.set_range(0,30)
-	 	scale.set_increments(0.5, 1)
-	 	scale.set_digits(1)
+	 	scale.set_range(0,8)
+	 	scale.set_increments(0.125, 1)
+	 	scale.set_digits(3)
 	 	scale.set_size_request(160, 45)
+		scale.set_value(1.0)
 	 	scale.connect("value-changed", self.scale_on_scale_change,i)
 	 	self.timescale.append(scale)
 	 self.fixed.put(self.timescale[0],30,250)
@@ -387,30 +391,32 @@ class Wave(gtk.Window):
 
 	 #Pause Button
 	 pausebutton=list()
-	 for i in range(3):
+	 for i in range(5):
 	      button=gtk.Button("Pause")
 	      button.connect("clicked", self.on_click_pause_button,i)
 	      pausebutton.append(button)
 	 self.fixed.put(pausebutton[0],110,450)
 	 self.fixed.put(pausebutton[1],320,450)
 	 self.fixed.put(pausebutton[2],530,450)
+	 self.fixed.put(pausebutton[3],130,530)
+	 self.fixed.put(pausebutton[4],370,530)
 	 
 	 
 	 
 	 #Mix Button
 	 mixbutton = gtk.Button("Mix and Play")
 	 mixbutton.connect("clicked",self.on_click_play_button,3)
-	 self.fixed.put(mixbutton,50,530)
+	 self.fixed.put(mixbutton,30,530)
 
 
 	 #Modulate Button
 	 modbutton = gtk.Button("Modulate and Play")
 	 modbutton.connect("clicked",self.on_click_play_button,4)
-	 self.fixed.put(modbutton,250,530)
+	 self.fixed.put(modbutton,230,530)
 
 
 	 #Record Button
-	 recordbutton = gtk.Button("Start/Stop Recording")
+	 recordbutton = gtk.Button("Start Recording")
 	 recordbutton.connect("clicked",self.on_click_record_button)
 	 self.fixed.put(recordbutton,450,530)
 
@@ -442,18 +448,12 @@ class Wave(gtk.Window):
 
 
 
- 	
-    def on_click_record_button(self,widget):
-	 if(self.is_recording==False):
-	        pid = os.fork()
-		self.is_recording = True
-		if(pid==0):
-		     self.rec.record_to_file('demo.wav')
-		     sys.exit(0)
-	 else:
-	        self.rec.stop = False
-		self.is_recording = False
-	 return
+
+    def destroy(self,widget,data=None):
+	 for i in range(5):
+	      if(self.pid1[i]>0):
+		   os.kill(self.pid1[i],9)
+	           self.pid1[i] = -1
 
 
 
@@ -473,6 +473,15 @@ class Wave(gtk.Window):
     def scale_on_scale_change(self,widget,val):
 	 amount = self.timescale[val].get_value()
 	 self.scale[val] = amount
+
+
+
+    def on_click_record_button(self,widget):
+	 pid = os.fork()
+	 if(pid==0):
+	      record_to_file('demo.wav')
+	      sys.exit(0)
+	 return
 	  
 
     def add_filters(self, dialog):

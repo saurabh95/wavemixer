@@ -76,15 +76,27 @@ class dsaa():
 	#	DestinationWaveFile.close()
 
 	def Reverse(self,SourceFile,DestinationFile):
-	     	self.data=list(self.data)
-	        self.data.reverse()
-		self.data=tuple(self.data)
+	        if(self.parameters[0]==1):
+	     		self.data=list(self.data)
+	        	self.data.reverse()
+			self.data=tuple(self.data)
 	     #	SourceWaveFile = self.OpenSourceFile(SourceFile)
 	#	parameters = SourceWaveFile.getparams()
 	#	length = SourceWaveFile.getnframes()
 #		print parameters
-		SourceLeft=[]
-		SourceRight=[]
+		else:
+			SourceLeft=[]
+			SourceRight=[]
+			for i in range(0,len(self.data),2):
+			     SourceLeft.append(self.data[i])
+			     SourceRight.append(self.data[i+1])
+			SourceLeft.reverse()
+			SourceRight.reverse()
+			l=[]
+			for i in range(len(SourceLeft)):
+			     l.append(SourceLeft[i])
+			     l.append(SourceRight[i])
+			self.data = tuple(l)
 #		for i in range(length):
 #	  		SourceLeft.append(SourceWaveFile.readframes(1))
 #		SourceWaveFile.close()
@@ -289,10 +301,10 @@ class dsaa():
      		     SourceWaveFile[i].close()
     		# if(parameters[1]==2):
 		for i in range(len(SourceFile)):
-		       if(parameters[i][1]==2):
+		     #      if(parameters[i][1]==2):
 			    var.append('%ih' %(parameters[i][0]*parameters[i][3]))
-		       else:
-			    var.append('%iB' %(parameters[i][0]*parameters[i][3]))
+		      # else:
+		#	    var.append('%iB' %(parameters[i][0]*parameters[i][3]))
 	        for i in range(len(SourceFile)):
 		     data.append(struct.unpack(var[i], waveData[i]))
 		n=1000000000000
@@ -304,6 +316,7 @@ class dsaa():
 		print len(data[0]),length[0]
 		print len(SourceFile)
 		parameters1[3]=m
+		print "HERE is M jnadslk andosamoida dansodnas"
 		print m
 		parameters1=tuple(parameters1)
      		l=[]
@@ -316,7 +329,7 @@ class dsaa():
 			  temp+=factor*int(data[j][i])
 	    	     l.append(int(temp))
 		print len(l)
-		if(parameters1[1]==2):
+		if(parameters1[0]==2):
 			for i in range(2*m-n):
 		     		l.append(0)
 		else:
@@ -420,7 +433,7 @@ class dsaa():
 			  temp*=int(data[j][i])
 	    	     l.append(int(temp))
 		print len(l)
-		if(parameters1[1]==2):
+		if(parameters1[0]==2):
 			for i in range(2*m-n):
 		     		l.append(0)
 		else:
